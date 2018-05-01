@@ -9,10 +9,13 @@ import itertools
 import tty, sys
 import datetime as dt
 import os
+import json
 
 FRAME_RATE = 15
 SCREEN_WIDTH = 1296
 SCREEN_HEIGHT = 972
+
+CONFIG_FILE = "config.json"
 
 LIST_EXPOSURE_MODE = ['off', 'auto', 'night', 'backlight']
 LIST_IMAGE_EFFECT = [
@@ -99,6 +102,79 @@ iso_index = 0
 contrast = 0
 sharpness = 0
 exposure_compensation = 0
+
+def load_config():
+
+    global exposure_index
+    global image_effect_index
+    global awb_index
+    global meter_index
+    global brightness 
+    global saturation
+    global iso_index
+    global contrast
+    global sharpness
+    global exposure_compensation
+
+    cur_path = os.path.dirname(os.path.realpath(__file__))
+    config_file = os.path.join(cur_path, CONFIG_FILE)
+    if not os.path.exists(config_file):
+        return
+
+    if not os.path.isfile(config_file):
+        return
+
+    try:
+        json_data = open(config_file).read()
+        data = json.loads(json_data)
+
+        exposure_index = data['exposure_index']
+        image_effect_index = data['image_effect_index']
+        awb_index = data['awb_index']
+        meter_index = data['meter_index']
+        brightness = data['brightness']
+        saturation = data['saturation']
+        iso_index = data['iso_index']
+        contrast = data['contrast']
+        sharpness = data['sharpness']
+        exposure_compensation = data['exposure_compensation']
+
+    except Exception:
+        pass
+    print("Camera params:\n")
+    print("Exposure mode: %s \n" % (LIST_EXPOSURE_MODE[exposure_index]))
+    print("Image effect: %s \n" % (LIST_IMAGE_EFFECT[image_effect_index]))
+    print("Auto-white-balance mode: %s \n" % (LIST_AWB_MODE[awb_index]))
+    print("Metering mode: %s \n" % (LIST_METER_MODE[meter_index]))
+    print("Brightness: %d \n" % (brightness))
+    print("Saturation: %d \n" % (saturation))
+    print("Contrast: %d \n" % (contrast))
+    print("Sharpness: %d \n" % (sharpness))
+    print("Exposure compensation: %d \n" % (exposure_compensation))
+    if iso_index == 0:
+        print("ISO: auto \n")
+    else:
+        print("ISO: %d \n" % (LIST_ISO_VALUE[iso_index]))
+
+def save_config():
+
+    cur_path = os.path.dirname(os.path.realpath(__file__))
+    config_file = os.path.join(cur_path, CONFIG_FILE)
+
+    with open(config_file, 'w') as outfile:
+        data = {
+            'exposure_index': exposure_index,
+            'image_effect_index': image_effect_index,
+            'awb_index': awb_index,
+            'meter_index': meter_index,
+            'brightness': brightness,
+            'saturation': saturation,
+            'iso_index': iso_index,
+            'contrast': contrast,
+            'sharpness': sharpness,
+            'exposure_compensation': exposure_compensation,
+        }
+        json.dump(data, outfile)
 
 def swith_exposure():
     global exposure_index
@@ -201,6 +277,8 @@ def main():
         sys.stderr.write(path + ' is not a valid directory.\n')
         sys.exit(1)
 
+    load_config()
+    sleep(1)
 
     fd = sys.stdin.fileno()
     old = termios.tcgetattr(fd)
@@ -241,6 +319,7 @@ def main():
                 elif ch == 'q':
                     camera.stop_preview()
                     camera.close()
+                    save_config()
                     exit(0)
                 elif ch == 'e':
                     swith_exposure()
