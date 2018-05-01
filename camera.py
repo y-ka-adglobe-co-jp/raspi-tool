@@ -60,14 +60,45 @@ LIST_METER_MODE = [
     'matrix'
 ]
 
+LIST_ISO_VALUE = [
+    0,
+    100,
+    200, 
+    320, 
+    400, 
+    500, 
+    640, 
+    800,
+    1000,
+    1200,
+    1600
+]
+
 BRIGHTNESS_MIN = 0
 BRIGHTNESS_MAX = 100
+
+SATURATION_MIN = -100
+SATURATION_MAX = 100
+
+CONTRAST_MIN = -100
+CONTRAST_MAX = 100
+
+SHARPNESS_MIN = -100
+SHARPNESS_MAX = 100
+
+EXPOSURE_COMPENSATION_MIN = -25
+EXPOSURE_COMPENSATION_MAX = 25
 
 exposure_index = 2
 image_effect_index = 0
 awb_index = 1
 meter_index = 1
 brightness = 50
+saturation = 0
+iso_index = 0
+contrast = 0
+sharpness = 0
+exposure_compensation = 0
 
 def swith_exposure():
     global exposure_index
@@ -104,6 +135,56 @@ def change_brightness(isUp):
         if brightness < BRIGHTNESS_MIN:
             brightness = BRIGHTNESS_MIN
 
+def change_saturation(isUp):
+    global saturation
+    if isUp:
+        saturation += 1
+        if saturation > SATURATION_MAX:
+            saturation = SATURATION_MAX
+    else:
+        saturation -= 1
+        if saturation < SATURATION_MIN:
+            saturation = SATURATION_MIN
+
+def swith_iso():
+    global iso_index
+    iso_index += 1
+    if iso_index >= len(LIST_ISO_VALUE):
+        iso_index = 0
+
+def change_contrast(isUp):
+    global contrast
+    if isUp:
+        contrast += 1
+        if contrast > CONTRAST_MAX:
+            contrast = CONTRAST_MAX
+    else:
+        contrast -= 1
+        if contrast < CONTRAST_MIN:
+            contrast = CONTRAST_MIN
+
+def change_sharpness(isUp):
+    global sharpness
+    if isUp:
+        sharpness += 1
+        if sharpness > SHARPNESS_MAX:
+            sharpness = SHARPNESS_MAX
+    else:
+        sharpness -= 1
+        if sharpness < SHARPNESS_MIN:
+            sharpness = SHARPNESS_MIN
+
+
+def change_exposure_compensation(isUp):
+    global exposure_compensation
+    if isUp:
+        exposure_compensation += 1
+        if exposure_compensation > EXPOSURE_COMPENSATION_MAX:
+            exposure_compensation = EXPOSURE_COMPENSATION_MAX
+    else:
+        exposure_compensation -= 1
+        if exposure_compensation < EXPOSURE_COMPENSATION_MIN:
+            exposure_compensation = EXPOSURE_COMPENSATION_MIN
 
 def main():
     ap = argparse.ArgumentParser(description = "Camera tool for Raspberry pi")
@@ -132,17 +213,17 @@ def main():
             camera.crop = (0.0, 0.0, 1.0, 1.0)
             camera.color_effects = None
             camera.video_stabilization = False
+
             camera.exposure_mode = LIST_EXPOSURE_MODE[exposure_index]
             camera.image_effect = 'none'
             camera.awb_mode = LIST_AWB_MODE[awb_index]
             camera.meter_mode = LIST_METER_MODE[meter_index]
-
-            camera.sharpness = 0
-            camera.contrast = 0
-            camera.brightness = 50
-            camera.saturation = 0
-            camera.ISO = 0
-            camera.exposure_compensation = 0
+            camera.brightness = brightness
+            camera.saturation = saturation
+            camera.ISO = LIST_ISO_VALUE[iso_index]
+            camera.contrast = contrast
+            camera.sharpness = sharpness
+            camera.exposure_compensation = exposure_compensation
 
             camera.resolution = (SCREEN_WIDTH, SCREEN_HEIGHT)
 
@@ -185,6 +266,45 @@ def main():
                     change_brightness(True)
                     camera.annotate_text = 'Brightness: %d' % (brightness)
                     camera.brightness = brightness
+                elif ch == 'w':
+                    change_saturation(True)
+                    camera.annotate_text = 'Saturation: %d' % (saturation)
+                    camera.saturation = saturation
+                elif ch == 's':
+                    change_saturation(False)
+                    camera.annotate_text = 'Saturation: %d' % (saturation)
+                    camera.saturation = saturation
+                elif ch == 'r':
+                    swith_iso()
+                    if iso_index == 0:
+                        camera.annotate_text = 'ISO: %s' % ('auto')
+                    else:
+                        camera.annotate_text = 'ISO: %d' % (LIST_ISO_VALUE[iso_index])
+                    camera.ISO = LIST_ISO_VALUE[iso_index]
+                elif ch == 'o':
+                    change_contrast(False)
+                    camera.annotate_text = 'Contrast: %d' % (contrast)
+                    camera.contrast = contrast
+                elif ch == 'p':
+                    change_contrast(True)
+                    camera.annotate_text = 'Contrast: %d' % (contrast)
+                    camera.contrast = contrast
+                elif ch == 'k':
+                    change_sharpness(False)
+                    camera.annotate_text = 'Sharpness: %d' % (sharpness)
+                    camera.sharpness = sharpness
+                elif ch == 'l':
+                    change_sharpness(True)
+                    camera.annotate_text = 'Sharpness: %d' % (sharpness)
+                    camera.sharpness = sharpness
+                elif ch == 'h':
+                    change_exposure_compensation(False)
+                    camera.annotate_text = 'Exposure compensation: %d' % (exposure_compensation)
+                    camera.exposure_compensation = exposure_compensation
+                elif ch == 'j':
+                    change_exposure_compensation(True)
+                    camera.annotate_text = 'Exposure compensation: %d' % (exposure_compensation)
+                    camera.exposure_compensation = exposure_compensation
 
     finally:
         termios.tcsetattr(fd, termios.TCSANOW, old)
